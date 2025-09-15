@@ -1,0 +1,111 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # FastAPI 백엔드
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: my-web-template-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=My Web Template
+      - DEBUG=True
+      - ENVIRONMENT=development
+      - DATABASE_URL=sqlite:///./app.db
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Next.js 프론트엔드
+  frontend:
+    build:
+      context: ./frontend  
+      dockerfile: Dockerfile
+    container_name: my-web-template-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - app-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # PostgreSQL 데이터베이스 (선택사항 - 필요시 주석 해제)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: my-web-template-postgres
+  #   environment:
+  #     - POSTGRES_DB=mywebtemplate
+  #     - POSTGRES_USER=admin
+  #     - POSTGRES_PASSWORD=password123
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - app-network
+  #   restart: unless-stopped
+
+  # Redis 캐시 (선택사항 - 필요시 주석 해제)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: my-web-template-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - app-network
+  #   restart: unless-stopped
+  #   command: redis-server --appendonly yes
+
+  # Nginx 리버스 프록시 (선택사항 - 프로덕션용)
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: my-web-template-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - backend
+  #     - frontend
+  #   networks:
+  #     - app-network
+  #   restart: unless-stopped
+
+# 볼륨 정의
+volumes:
+  backend_data:
+    driver: local
+  # postgres_data:
+  #   driver: local
+  # redis_data:
+  #   driver: local
+
+# 네트워크 정의  
+networks:
+  app-network:
+    driver: bridge

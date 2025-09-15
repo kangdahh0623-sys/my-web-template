@@ -1,58 +1,105 @@
-# backend/app/core/config.py
-from pydantic_settings import BaseSettings
-from typing import List
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Optional, List
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# .../backend (app/core/config.py 기준 두 단계 위)
+BASE_DIR = Path(__file__).resolve().parents[2]
+
 
 class Settings(BaseSettings):
-    # 기본
-    APP_NAME: str = "My Web Template"
-    DEBUG: bool = True
-    ENVIRONMENT: str = "development"
+    # --- pydantic v2 설정 ---
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",  # ✅ .env에 정의돼 있지만 모델에 없는 키는 무시
+    )
 
-    # 서버
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    # ===== 공통/서버 환경 =====
+    environment: str = "development"
+    debug: bool = False
+    secret_key: str = "change-me"
+    database_url: Optional[str] = "sqlite:///./app.db"
 
-    # CORS (개발용)
-    ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "*",
-    ]
+    # CORS
+    allowed_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "*"]
 
-    # DB/보안 (필요시 변경)
-    DATABASE_URL: str = "sqlite:///./app.db"
-    SECRET_KEY: str = "change-this-secret-key"
+    # ===== 비전/YOLO 관련 =====
+    yolo_weights: Optional[str] = "models/best.pt"
+    yolo_device: str = "cpu"
+    yolo_imgsz: int = 640
+    yolo_conf: float = 0.5
+    yolo_max_det: int = 20
 
-    # ===== YOLO / Intake 설정 추가 =====
-    # 가중치 경로(상대/절대 모두 가능)
-    YOLO_WEIGHTS: str = "models/best.pt"
-    # 네가 쓰는 외부 영양/밀도 사전 폴더 (없으면 빈 문자열)
-    FOOD_META_PATH: str = ""
-    # 미디어(시각화 이미지) 저장 위치
-    MEDIA_DIR: str = "media"
-    INTAKE_MEDIA_SUBDIR: str = "intake"
+    # 데이터/미디어 경로
+    food_meta_path: Optional[str] = None
+    media_dir: str = "media"
+    intake_media_subdir: str = "intake"
 
-    # 기본 추론 파라미터(필요 시 사용)
-    YOLO_DEVICE: str = "cpu"
-    YOLO_IMGSZ: int = 224
-    YOLO_CONF: float = 0.5
-    YOLO_MAX_DET: int = 20
+    # ===== 식단 최적화 프리셋 플래그 =====
+    mealplan_use_preset: bool = True
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-
-    MEAL_PRICE_CSV: str = "data/price.csv"
-    MEAL_NUTR_CSV: str = "data/nutr.csv"
+    # ===== 식단 최적화 CSV 경로(.env 키와 동일) =====
+    MEAL_PRICE_CSV: Optional[str] = None
+    MEAL_NUTR_CSV: Optional[str] = None
     MEAL_CATEGORY_CSV: Optional[str] = None
     MEAL_STUDENT_PREF_CSV: Optional[str] = None
     MEAL_PAIR_PREF_CSV: Optional[str] = None
 
-    MEALPLAN_USE_PRESET: bool = True  # 기본 프리셋 사용
+    # ---------- 유틸 ----------
+    @staticmethod
+    def resolve_path(p: Optional[str]) -> Optional[str]:
+        """상대경로면 backend/ 기준 절대경로로 변환"""
+        if not p:
+            return None
+        q = Path(p)
+        if not q.is_absolute():
+            q = (BASE_DIR / q).resolve()
+        return str(q)
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-# 전역 설정 인스턴스
+    # ---------- 파서/밸리데이터 ----------
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def _parse_allowed_origins(cls, v):
+        # .env에서 '["...","..."]' 형태면 JSON으로 파싱, 콤마 구분 문자열도 허용
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return [s.strip() for s in v.split(",") if s.strip()]
+        return v
+
+    @field_validator("debug", "mealplan_use_preset", mode="before")
+    @classmethod
+    def _parse_bool(cls, v):
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.strip().lower() in {"1", "true", "yes", "y", "on"}
+        return bool(v)
+
+    @field_validator("yolo_imgsz", "yolo_max_det", mode="before")
+    @classmethod
+    def _parse_int(cls, v):
+        try:
+            return int(v)
+        except Exception:
+            return v
+
+    @field_validator("yolo_conf", mode="before")
+    @classmethod
+    def _parse_float(cls, v):
+        try:
+            return float(v)
+        except Exception:
+            return v
+
+
 settings = Settings()

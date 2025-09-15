@@ -30,6 +30,51 @@ interface IntakeResult {
 
 type ModalType = "student" | "nutritionist" | null;
 
+// 샘플 데이터
+const statsData = [
+  { label: "전국 학교", value: "11,372", unit: "개교", icon: "🏫", color: "from-blue-500 to-blue-600" },
+  { label: "급식 학생", value: "545만", unit: "명", icon: "👨‍🎓", color: "from-green-500 to-green-600" },
+  { label: "일평균 급식비", value: "4,850", unit: "원", icon: "💰", color: "from-purple-500 to-purple-600" },
+  { label: "영양사", value: "8,240", unit: "명", icon: "👩‍⚕️", color: "from-orange-500 to-orange-600" },
+];
+
+const newsData = [
+  {
+    title: "AI 기반 급식 영양 분석 시스템 도입",
+    summary: "사진 촬영만으로 섭취량과 영양소를 분석하는 혁신 기술이 주목받고 있습니다.",
+    date: "2024.09.15",
+    category: "기술",
+    color: "bg-blue-100 text-blue-800"
+  },
+  {
+    title: "학교급식 만족도 90% 돌파",
+    summary: "맛있는 급식으로 화제가 된 학교들이 늘어나고 있으며, SNS 인증샷 문화도 확산",
+    date: "2024.09.10",
+    category: "교육",
+    color: "bg-green-100 text-green-800"
+  },
+  {
+    title: "영양사 업무 효율화로 급식 품질 향상",
+    summary: "데이터 기반 식단 최적화 시스템으로 영양사들의 업무 부담을 줄이고 있습니다.",
+    date: "2024.09.08",
+    category: "정책",
+    color: "bg-purple-100 text-purple-800"
+  },
+  {
+    title: "저나트륨 급식으로 건강한 식습관 형성",
+    summary: "나트륨 저감 정책과 함께 학생들의 건강한 식습관 형성에 기여하고 있습니다.",
+    date: "2024.09.05",
+    category: "건강",
+    color: "bg-orange-100 text-orange-800"
+  }
+];
+
+const nutritionStandards = [
+  { nutrient: "탄수화물", range: "55-65%", current: "62%", color: "bg-green-500" },
+  { nutrient: "단백질", range: "7-20%", current: "15%", color: "bg-blue-500" },
+  { nutrient: "지방", range: "15-30%", current: "23%", color: "bg-purple-500" },
+];
+
 export default function HomePage() {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
@@ -105,9 +150,9 @@ export default function HomePage() {
           <span>{v.toFixed(1)} / {m} {unit}</span>
         </div>
         <div className="h-3 w-full rounded-full bg-gradient-to-r from-gray-200 to-gray-300 overflow-hidden">
-          <div 
-            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-700 ease-out" 
-            style={{ width: `${pct}%` }} 
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-700 ease-out"
+            style={{ width: `${pct}%` }}
           />
         </div>
       </div>
@@ -128,52 +173,147 @@ export default function HomePage() {
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
               AI 기반 급식 관리 솔루션
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent mb-6">
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-blue-700 to-sky-500 bg-clip-text text-transparent mb-6">
               급식줍쇼
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
-              <span className="font-semibold text-blue-600">학생</span>을 위한 스마트 영양 분석과 
+              <span className="font-semibold text-blue-600">학생</span>을 위한 스마트 영양 분석과
               <span className="font-semibold text-green-600"> 영양사</span>를 위한 데이터 기반 식단 최적화를 제공합니다
             </p>
-            
-            {/* Action Cards */}
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <div 
-                onClick={() => setActiveModal("student")}
-                className="group relative p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 hover:bg-white/90"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-3xl"></div>
-                <div className="relative">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* 통계 섹션 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">대한민국 학교급식 현황</h2>
+          <p className="text-lg text-gray-600">전국 학교급식 통계로 보는 우리의 현재</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+          {statsData.map((stat, index) => (
+            <div key={index} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-2xl mb-4`}>
+                {stat.icon}
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {stat.value}<span className="text-lg text-gray-600">{stat.unit}</span>
+              </div>
+              <div className="text-sm text-gray-600">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* 영양 기준 섹션 */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-white/50 shadow-lg mb-16">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">학교급식 영양 기준</h3>
+            <p className="text-gray-600">교육부 고시 학교급식 영양소 섭취 기준</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {nutritionStandards.map((item, index) => (
+              <div key={index} className="text-center">
+                <div className="mb-4">
+                  <div className={`w-20 h-20 mx-auto rounded-full ${item.color} flex items-center justify-center text-white font-bold text-lg mb-3`}>
+                    {item.current}
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">식단 분석 · 영양</h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    전/후 사진으로 섭취량을 분석하고<br/>
-                    개인별 영양 상태를 확인해보세요
-                  </p>
+                  <h4 className="font-semibold text-gray-900">{item.nutrient}</h4>
+                  <p className="text-sm text-gray-600">기준: {item.range}</p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`${item.color} h-2 rounded-full transition-all duration-700`}
+                    style={{ width: `${parseInt(item.current)}%` }}
+                  />
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-              <div 
-                onClick={() => setActiveModal("nutritionist")}
-                className="group relative p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 hover:bg-white/90"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 rounded-3xl"></div>
-                <div className="relative">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">영양사 · 식단표</h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    데이터와 물가를 반영한<br/>
-                    최적화된 식단표를 생성하세요
-                  </p>
+      {/* 뉴스 섹션 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">급식 트렌드 & 뉴스</h2>
+          <p className="text-lg text-gray-600">학교급식의 최신 동향을 확인하세요</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 mb-16">
+          {newsData.map((news, index) => (
+            <article key={index} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="flex items-start gap-4">
+                <div className={`px-3 py-1 rounded-full text-xs font-medium ${news.color}`}>
+                  {news.category}
                 </div>
+                <div className="text-sm text-gray-500">{news.date}</div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3 mt-4">{news.title}</h3>
+              <p className="text-gray-600 leading-relaxed">{news.summary}</p>
+              <button className="mt-4 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors">
+                자세히 보기 →
+              </button>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      {/* Action Cards */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">시작해보세요</h2>
+          <p className="text-lg text-gray-600">AI 급식 분석으로 더 건강한 식단을 만들어보세요</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div
+            onClick={() => setActiveModal("student")}
+            className="group relative p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 hover:bg-white/90"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-3xl"></div>
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">식단 분석 · 영양</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                전/후 사진으로 섭취량을 분석하고<br />
+                개인별 영양 상태를 확인해보세요
+              </p>
+              <div className="flex items-center text-sm text-blue-600 font-medium">
+                <span>무료 분석 시작</span>
+                <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div
+            onClick={() => setActiveModal("nutritionist")}
+            className="group relative p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 hover:bg-white/90"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 rounded-3xl"></div>
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">영양사 · 식단표</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                데이터와 물가를 반영한<br />
+                최적화된 식단표를 생성하세요
+              </p>
+              <div className="flex items-center text-sm text-green-600 font-medium">
+                <span>식단표 생성하기</span>
+                <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
           </div>
@@ -189,7 +329,7 @@ export default function HomePage() {
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   식단 분석 · 영양
                 </h2>
-                <button 
+                <button
                   onClick={closeModal}
                   className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group"
                 >
@@ -238,6 +378,7 @@ export default function HomePage() {
                 </div>
 
                 <button
+                  type="button"
                   onClick={handleStudentAnalysis}
                   disabled={studentLoading || !before || !after}
                   className="w-full mt-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-[1.02] disabled:hover:scale-100"
@@ -323,9 +464,8 @@ export default function HomePage() {
                         <button
                           key={i}
                           onClick={() => setRating(i + 1)}
-                          className={`transition-all hover:scale-110 ${
-                            i < rating ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"
-                          }`}
+                          className={`transition-all hover:scale-110 ${i < rating ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"
+                            }`}
                         >
                           ★
                         </button>
@@ -362,7 +502,7 @@ export default function HomePage() {
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                   영양사 · 식단표 생성
                 </h2>
-                <button 
+                <button
                   onClick={closeModal}
                   className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center group"
                 >
@@ -414,6 +554,7 @@ export default function HomePage() {
                 </div>
 
                 <button
+                  type="button"
                   onClick={handleNutritionistOptimize}
                   disabled={nutritionistLoading}
                   className="w-full mt-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-[1.02] disabled:hover:scale-100"
@@ -472,7 +613,7 @@ export default function HomePage() {
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h4 className="text-xl font-bold text-gray-900">DAY {detail.day} 상세 정보</h4>
-              <button 
+              <button
                 onClick={() => setDetail(null)}
                 className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center"
               >

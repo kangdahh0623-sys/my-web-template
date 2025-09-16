@@ -26,8 +26,20 @@ class Settings(BaseSettings):
     secret_key: str = "change-me"
     database_url: Optional[str] = "sqlite:///./app.db"
 
-    # CORS
-    allowed_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "*"]
+    # CORS - localhost:3000 추가 및 더 관대한 설정
+    allowed_origins: List[str] = [
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000", 
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "*"
+    ]
+    
+    # CORS 추가 설정
+    allow_credentials: bool = True
+    allowed_methods: List[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"]
+    allowed_headers: List[str] = ["*"]
+    max_age: int = 86400  # 24시간
 
     # ===== 비전/YOLO 관련 =====
     yolo_weights: Optional[str] = "models/best.pt"
@@ -51,6 +63,15 @@ class Settings(BaseSettings):
     MEAL_STUDENT_PREF_CSV: Optional[str] = None
     MEAL_PAIR_PREF_CSV: Optional[str] = None
 
+    # ===== 타임아웃 설정 (중요!) =====
+    request_timeout: int = 300  # 5분
+    optimization_timeout: int = 180  # 3분
+    keep_alive_timeout: int = 65
+    
+    # ===== 서버 성능 설정 =====
+    workers: int = 1
+    worker_connections: int = 1000
+    
     # ---------- 유틸 ----------
     @staticmethod
     def resolve_path(p: Optional[str]) -> Optional[str]:
@@ -76,7 +97,19 @@ class Settings(BaseSettings):
                 return [s.strip() for s in v.split(",") if s.strip()]
         return v
 
-    @field_validator("debug", "mealplan_use_preset", mode="before")
+    @field_validator("allowed_methods", "allowed_headers", mode="before")
+    @classmethod
+    def _parse_list_fields(cls, v):
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return [s.strip() for s in v.split(",") if s.strip()]
+        return v
+
+    @field_validator("debug", "mealplan_use_preset", "allow_credentials", mode="before")
     @classmethod
     def _parse_bool(cls, v):
         if isinstance(v, bool):
@@ -85,7 +118,7 @@ class Settings(BaseSettings):
             return v.strip().lower() in {"1", "true", "yes", "y", "on"}
         return bool(v)
 
-    @field_validator("yolo_imgsz", "yolo_max_det", mode="before")
+    @field_validator("yolo_imgsz", "yolo_max_det", "max_age", "request_timeout", "optimization_timeout", "keep_alive_timeout", "workers", "worker_connections", mode="before")
     @classmethod
     def _parse_int(cls, v):
         try:

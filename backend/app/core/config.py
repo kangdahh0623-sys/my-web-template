@@ -57,11 +57,11 @@ class Settings(BaseSettings):
     mealplan_use_preset: bool = True
 
     # ===== 식단 최적화 CSV 경로(.env 키와 동일) =====
-    MEAL_PRICE_CSV: Optional[str] = None
-    MEAL_NUTR_CSV: Optional[str] = None
-    MEAL_CATEGORY_CSV: Optional[str] = None
-    MEAL_STUDENT_PREF_CSV: Optional[str] = None
-    MEAL_PAIR_PREF_CSV: Optional[str] = None
+    meal_price_csv: Optional[str] = None
+    meal_nutr_csv: Optional[str] = None  
+    meal_category_csv: Optional[str] = None
+    meal_student_pref_csv: Optional[str] = None
+    meal_pair_pref_csv: Optional[str] = None
 
     # ===== 타임아웃 설정 (중요!) =====
     request_timeout: int = 300  # 5분

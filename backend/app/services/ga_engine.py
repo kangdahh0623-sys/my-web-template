@@ -60,7 +60,7 @@ POP_SIZE      = 200
 GENERATIONS   = 300
 CX_RATE       = 0.10
 MUT_RATE      = 0.10
-SEED          = 42
+SEED          = 100
 random.seed(SEED); np.random.seed(SEED)
 
 # 미크로 영양소

@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles  
 import logging
 import os
+from app.api import workflow
 
 from app.core.config import settings
 
@@ -40,6 +41,7 @@ app.include_router(main_api_router, prefix="/api")
 app.include_router(mealplan.router, prefix="/api/mealplan", tags=["mealplan"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(webhook.router, prefix="/api/webhook", tags=["webhook"])
+app.include_router(workflow.router, prefix="/api/workflow", tags=["workflow"])
 
 # 기본 라우트
 @app.get("/")

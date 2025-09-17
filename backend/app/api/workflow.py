@@ -160,6 +160,10 @@ async def parse_natural_language(request: NaturalLanguageRequest):
         logger.error(f"자연어 파싱 실패: {e}")
         raise HTTPException(status_code=500, detail=f"자연어 파싱 중 오류: {str(e)}")
 
+class NaturalLanguageRequest(BaseModel):
+    natural_text: str
+    current_params: Dict[str, Any]
+
 @router.post("/optimize")
 async def optimize_with_strategy(request: WorkflowOptimizeRequest):
     """실제 CSV 데이터와 전략을 기반으로 메뉴 최적화 수행"""

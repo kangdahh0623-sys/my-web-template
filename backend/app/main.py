@@ -33,15 +33,38 @@ media_dir = getattr(settings, 'media_dir', 'media')
 os.makedirs(media_dir, exist_ok=True)
 app.mount("/media", StaticFiles(directory=media_dir), name="media")
 
-# API 라우터 등록 (app이 정의된 후에 import)
-from app.api.main import router as main_api_router
-from app.api import admin, webhook, mealplan
+# API 라우터 등록 - 안전하게 import
+try:
+    from app.api.main import router as main_api_router
+    app.include_router(main_api_router, prefix="/api")
+    logger.info("Main API router 등록 완료")
+except ImportError as e:
+    logger.warning(f"Main API router 로드 실패: {e}")
 
-app.include_router(main_api_router, prefix="/api")
-app.include_router(mealplan.router, prefix="/api/mealplan", tags=["mealplan"])
-app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
-app.include_router(webhook.router, prefix="/api/webhook", tags=["webhook"])
+try:
+    from app.api import mealplan
+    app.include_router(mealplan.router, prefix="/api/mealplan", tags=["mealplan"])
+    logger.info("Mealplan router 등록 완료")
+except ImportError as e:
+    logger.warning(f"Mealplan router 로드 실패: {e}")
+
+try:
+    from app.api import admin
+    app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+    logger.info("Admin router 등록 완료")
+except ImportError as e:
+    logger.warning(f"Admin router 로드 실패: {e}")
+
+try:
+    from app.api import webhook
+    app.include_router(webhook.router, prefix="/api/webhook", tags=["webhook"])
+    logger.info("Webhook router 등록 완료")
+except ImportError as e:
+    logger.warning(f"Webhook router 로드 실패: {e}")
+
+# Workflow router는 이미 import되어 있으므로 바로 등록
 app.include_router(workflow.router, prefix="/api/workflow", tags=["workflow"])
+logger.info("Workflow router 등록 완료")
 
 # 기본 라우트
 @app.get("/")

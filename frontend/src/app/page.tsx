@@ -194,7 +194,10 @@ export default function HomePage() {
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse" />
               AI 기반 급식 관리 솔루션
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent mb-6">
+            <h1
+                className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent mb-6 cursor-pointer"
+                onClick={() => window.location.href = 'http://localhost:3000'}
+            >
               급식줍쇼
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">

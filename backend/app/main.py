@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles  
 import logging
 import os
-from app.api import workflow
 
 from app.core.config import settings
 
@@ -62,9 +61,13 @@ try:
 except ImportError as e:
     logger.warning(f"Webhook router 로드 실패: {e}")
 
-# Workflow router는 이미 import되어 있으므로 바로 등록
-app.include_router(workflow.router, prefix="/api/workflow", tags=["workflow"])
-logger.info("Workflow router 등록 완료")
+try:
+    from app.api import workflow
+    app.include_router(workflow.router, prefix="/api/workflow", tags=["workflow"])
+    logger.info("Workflow router 등록 완료")
+except ImportError as e:
+    logger.warning(f"Workflow router 로드 실패: {e}")
+
 
 # 기본 라우트
 @app.get("/")

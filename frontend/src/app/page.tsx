@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { analyzeBeforeAfter, optimizeMealplan, toMediaUrl, type PlanRow } from "@/lib/api";
 
 // ===== Types (keep in sync with your api.ts) =====
@@ -77,6 +78,8 @@ const nutritionStandards = [
 
 // ===== Component =====
 export default function HomePage() {
+  const router = useRouter();
+
   // Modal state
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
@@ -209,7 +212,8 @@ export default function HomePage() {
           <p className="text-lg text-gray-600">AI 급식 분석으로 더 건강한 식단을 만들어보세요</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {/* 학생 카드 */}
           <div
             onClick={() => setActiveModal("student")}
             className="group relative p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 hover:bg-white/90"
@@ -236,6 +240,7 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* 영양사 카드 */}
           <div
             onClick={() => setActiveModal("nutritionist")}
             className="group relative p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 hover:bg-white/90"
@@ -255,6 +260,31 @@ export default function HomePage() {
               </p>
               <div className="flex items-center text-sm text-green-600 font-medium">
                 <span>식단표 생성하기</span>
+                <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* 4단계 워크플로우 카드 */}
+          <div
+            onClick={() => router.push("/workflow")}
+            className="group relative p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 hover:bg-white/90"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 rounded-3xl" />
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <span className="text-3xl">🤖</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">여러 식단 대안 생성</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                LLM과 RPA를 이용하여
+                <br />
+                여러 대안과 장단점 비교
+              </p>
+              <div className="flex items-center text-sm text-purple-600 font-medium">
+                <span>워크플로우 체험</span>
                 <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

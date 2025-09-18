@@ -278,7 +278,7 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 rounded-3xl" />
             <div className="relative">
               <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <span className="text-3xl">🤖</span>
+                <span className="text-3xl">✍</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">여러 식단 대안 생성</h3>
               <p className="text-gray-600 leading-relaxed mb-4">

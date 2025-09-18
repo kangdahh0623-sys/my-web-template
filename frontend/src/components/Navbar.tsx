@@ -14,6 +14,7 @@ export default function Navbar() {
         <nav className="flex items-center gap-4">
           <Link href="/student" className="px-3 py-1 rounded-lg hover:bg-gray-100">식단 분석·영양</Link>
           <Link href="/nutritionist" className="px-3 py-1 rounded-lg hover:bg-gray-100">영양사·식단표</Link>
+          <Link href="/workflow" className="px-3 py-1 rounded-lg hover:bg-gray-100">LLM과 ARP기반 대안 생성</Link>
           <span className={`inline-block w-2 h-2 rounded-full ${badge}`} title="backend health" />
           <Link href="/signup" className="text-sm text-blue-600">회원가입</Link>
         </nav>

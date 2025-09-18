@@ -68,7 +68,20 @@ try:
 except ImportError as e:
     logger.warning(f"Workflow router 로드 실패: {e}")
 
+try:
+    from app.api import csv_rpa
+    app.include_router(csv_rpa.router, prefix="/api/csv-rpa", tags=["csv-rpa"])
+    logger.info("CSV RPA router 등록 완료")
+except ImportError as e:
+    logger.warning(f"CSV RPA router 로드 실패: {e}")
 
+try:
+    from app.api import csv_llm
+    app.include_router(csv_llm.router, prefix="/api/csv-llm", tags=["csv-llm"])
+    logger.info("CSV LLM router 등록 완료")
+except ImportError as e:
+    logger.warning(f"CSV LLM router 로드 실패: {e}")
+    
 # 기본 라우트
 @app.get("/")
 async def root():
@@ -90,3 +103,4 @@ if __name__ == "__main__":
         port=8000,
         reload=getattr(settings, "DEBUG", False)
     )
+

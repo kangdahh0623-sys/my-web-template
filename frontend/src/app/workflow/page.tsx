@@ -9,8 +9,8 @@ import {
   optimizeWithStrategy,
   optimizeMealplan,
   generateReport,
-  generateAlternativesWithCSV,  // 추가
-  analyzeWithCSVRPA,           // 추가
+  generateAlternativesWithCSV, // 추가
+  analyzeWithCSVRPA, // 추가
   parseNaturalLanguageWithCSV,
   type WorkflowAlternative,
   type AgentAnalysis,
@@ -64,80 +64,89 @@ export default function WorkflowPage() {
     setError(null);
 
     try {
-      console.log("사용자 입력 분석 중:", userRequest);
+      console.log("CSV 기반 LLM 분석 시작:", userRequest);
 
       // 동적 파싱
       const budgetMatch = userRequest.match(/(\d+)\s*원/);
       const daysMatch = userRequest.match(/(\d+)\s*일/);
       const caloriesMatch = userRequest.match(/(\d+)\s*(?:칼로리|kcal)/i);
 
-      // 추출된 값 또는 기본값
       const extractedBudget = budgetMatch ? parseInt(budgetMatch[1]) : 5370;
       const extractedDays = daysMatch ? parseInt(daysMatch[1]) : 20;
       const extractedCalories = caloriesMatch ? parseInt(caloriesMatch[1]) : 900;
 
-      console.log("파싱 결과:", {
+      console.log("추출된 파라미터:", {
         budget: extractedBudget,
         days: extractedDays,
         calories: extractedCalories,
       });
 
       // params 업데이트
-      setParams({
+      const newParams = {
         budget: extractedBudget,
         days: extractedDays,
         calories: extractedCalories,
-      });
+      };
+      setParams(newParams);
 
-      // 동적 대안 생성
-      const mockAlternatives = [
-        {
-          id: 1,
-          title: "영양 균형 중심 전략",
-          description: `${extractedBudget}원 예산에서 ${extractedCalories}kcal 목표로 영양소 균형 최우선`,
-          strategy_type: "nutrition",
-          estimated_cost: Math.round(extractedBudget * 1.03),
-          target_calories: Math.round(extractedCalories * 1.05),
-          features: [
-            `${extractedDays}일 단백질 최적화`,
-            `${extractedCalories}kcal 기준 비타민 강화`,
-            "성장기 맞춤 영양소",
-          ],
-          highlight: `${extractedBudget}원 예산 맞춤형 영양 설계`,
-        },
-        {
-          id: 2,
-          title: "경제성 우선 전략",
-          description: `${extractedBudget}원 예산 최대 절약으로 ${extractedDays}일 운영`,
-          strategy_type: "economic",
-          estimated_cost: Math.round(extractedBudget * 0.92),
-          target_calories: Math.round(extractedCalories * 0.97),
-          features: [
-            `${Math.round(extractedBudget * 0.08)}원 절약 가능`,
-            `${extractedDays}일 안정적 공급`,
-            "운영비 최소화",
-          ],
-          highlight: `일 평균 ${Math.round(extractedBudget * 0.92)}원으로 운영`,
-        },
-        {
-          id: 3,
-          title: "학생 선호도 중심",
-          description: `${extractedCalories}kcal 목표에서 ${extractedDays}일간 학생 만족도 극대화`,
-          strategy_type: "preference",
-          estimated_cost: Math.round(extractedBudget * 0.98),
-          target_calories: Math.round(extractedCalories * 1.02),
-          features: [
-            `${extractedDays}일 인기 메뉴 위주`,
-            `${extractedCalories}kcal 맛있게 달성`,
-            "섭취율 95% 이상 목표",
-          ],
-          highlight: `${extractedDays}일간 높은 만족도 보장`,
-        },
-      ];
+      try {
+        // 실제 CSV 기반 LLM 분석 시도
+        const response = await generateAlternativesWithCSV(userRequest, newParams);
+        console.log("CSV LLM 분석 성공:", response);
+        setAlternatives(response.alternatives);
+        setCurrentStep(2);
+      } catch (e: any) {
+        console.log("CSV LLM 실패, Mock 대안 사용:", e.message);
 
-      console.log("생성된 동적 대안:", mockAlternatives);
-      setAlternatives(mockAlternatives);
-      setCurrentStep(2);
+        // 실패시 동적 Mock 대안 생성
+        const mockAlternatives = [
+          {
+            id: 1,
+            title: "영양 균형 중심 전략",
+            description: `${extractedBudget}원 예산에서 ${extractedCalories}kcal 목표로 영양소 균형 최우선`,
+            strategy_type: "nutrition",
+            estimated_cost: extractedBudget,
+            target_calories: extractedCalories,
+            features: [
+              `${extractedDays}일 단백질 최적화`,
+              `${extractedCalories}kcal 기준 비타민 강화`,
+              "성장기 맞춤 영양소",
+            ],
+            highlight: `${extractedBudget}원 예산 맞춤형 영양 설계`,
+          },
+          {
+            id: 2,
+            title: "경제성 우선 전략",
+            description: `${extractedBudget}원 예산 최대 절약으로 ${extractedDays}일 운영`,
+            strategy_type: "economic",
+            estimated_cost: extractedBudget,
+            target_calories: extractedCalories,
+            features: [
+              `${Math.round(extractedBudget * 0.08)}원 절약 가능`,
+              `${extractedDays}일 안정적 공급`,
+              "운영비 최소화",
+            ],
+            highlight: `일 평균 ${Math.round(extractedBudget * 0.92)}원으로 운영`,
+          },
+          {
+            id: 3,
+            title: "학생 선호도 중심",
+            description: `${extractedCalories}kcal 목표에서 ${extractedDays}일간 학생 만족도 극대화`,
+            strategy_type: "preference",
+            estimated_cost: extractedBudget,
+            target_calories: extractedCalories,
+            features: [
+              `${extractedDays}일 인기 메뉴 위주`,
+              `${extractedCalories}kcal 맛있게 달성`,
+              "섭취율 95% 이상 목표",
+            ],
+            highlight: `${extractedDays}일간 높은 만족도 보장`,
+          },
+        ];
+
+        setAlternatives(mockAlternatives);
+        setCurrentStep(2);
+      }
     } catch (e: any) {
       console.error("대안 생성 실패:", e);
       setError("대안 생성 중 오류가 발생했습니다.");
@@ -146,77 +155,100 @@ export default function WorkflowPage() {
     }
   };
 
-  const generateRPAAnalysis = (results: any[]) => {
-    return results.map((result, idx) => {
-      const menuPlan = result.menuPlan;
-      const totalCost = Math.round(
-        menuPlan.reduce(
-          (sum: number, day: any) => sum + safeNumber(day.day_cost),
-          0
-        )
-      );
-      const avgCalories =
-        menuPlan.length > 0
-          ? Math.round(
-              menuPlan.reduce(
-                (sum: number, day: any) => sum + safeNumber(day.day_kcal),
-                0
-              ) / menuPlan.length
-            )
-          : 0;
+  const generateRPAAnalysis = async (results: any[]) => {
+    try {
+      // 실제 CSV 기반 RPA 분석 시도
+      const rpaResponse = await analyzeWithCSVRPA(results);
+      console.log("CSV RPA 분석 성공:", rpaResponse);
 
-      let pros: string[] = [];
-      let cons: string[] = [];
-      let risks: string[] = [];
+      // RPA 응답을 프론트엔드 형식으로 변환
+      return rpaResponse.analysis.map((analysis: any, idx: number) => {
+        const result = results[idx];
+        const menuPlan = result.menuPlan;
+        const totalCost = Math.round(
+          menuPlan.reduce((sum: number, day: any) => sum + safeNumber(day.day_cost), 0)
+        );
+        const avgCalories =
+          menuPlan.length > 0
+            ? Math.round(
+                menuPlan.reduce((sum: number, day: any) => sum + safeNumber(day.day_kcal), 0) /
+                  menuPlan.length
+              )
+            : 0;
 
-      if (result.alternative.strategy_type === "nutrition") {
-        pros = [
-          "영양소 균형이 우수함",
-          "성장기 학생에게 적합한 단백질 함량",
-          "비타민/무기질 충족도 높음",
-        ];
-        cons = ["비용이 다소 높을 수 있음", "학생 선호도는 보통 수준"];
-        risks = ["식재료 가격 변동 시 예산 초과 위험"];
-      } else if (result.alternative.strategy_type === "economic") {
-        pros = [
-          "예산 효율성이 가장 높음",
-          "식재료 조달이 안정적",
-          "운영 비용 절감 효과",
-        ];
-        cons = ["영양소 다양성이 제한적", "메뉴 반복도가 높을 수 있음"];
-        risks = ["영양 불균형으로 인한 학부모 민원 가능"];
-      } else {
-        pros = [
-          "학생 만족도가 가장 높음",
-          "섭취율 향상으로 잔반 감소",
-          "급식 참여율 증가 기대",
-        ];
-        cons = ["영양 균형 달성이 어려움", "예산 관리가 까다로움"];
-        risks = ["영양사 전문성에 대한 의문 제기 가능"];
-      }
+        return {
+          alternative: result.alternative,
+          metrics: {
+            totalCost,
+            avgCalories,
+            budgetCompliance:
+              menuPlan.length > 0
+                ? ((params.budget / (totalCost / menuPlan.length)) * 100).toFixed(1)
+                : "0.0",
+            nutritionScore: analysis.scores.nutrition,
+            preferenceScore: analysis.scores.preference,
+            feasibilityScore: analysis.scores.feasibility,
+          },
+          pros: analysis.pros,
+          cons: analysis.cons,
+          risks: analysis.risks,
+          recommendation: "실행 가능",
+          dataInsights: analysis.data_insights,
+        };
+      });
+    } catch (e: any) {
+      console.log("CSV RPA 실패, Mock 분석 사용:", e.message);
 
-      return {
-        alternative: result.alternative,
-        metrics: {
-          totalCost,
-          avgCalories,
-          budgetCompliance:
-            menuPlan.length > 0
-              ? (
-                  (params.budget / (totalCost / menuPlan.length)) *
-                  100
-                ).toFixed(1)
-              : "0.0",
-          nutritionScore: Math.random() * 30 + 70,
-          preferenceScore: Math.random() * 30 + 70,
-          feasibilityScore: Math.random() * 20 + 80,
-        },
-        pros,
-        cons,
-        risks,
-        recommendation: result.status === "success" ? "실행 가능" : "수정 필요",
-      };
-    });
+      // 실패시 기존 Mock 분석 사용
+      return results.map((result) => {
+        const menuPlan = result.menuPlan;
+        const totalCost = Math.round(
+          menuPlan.reduce((sum: number, day: any) => sum + safeNumber(day.day_cost), 0)
+        );
+        const avgCalories =
+          menuPlan.length > 0
+            ? Math.round(
+                menuPlan.reduce((sum: number, day: any) => sum + safeNumber(day.day_kcal), 0) /
+                  menuPlan.length
+              )
+            : 0;
+
+        let pros: string[] = [];
+        let cons: string[] = [];
+        let risks: string[] = [];
+
+        if (result.alternative.strategy_type === "nutrition") {
+          pros = ["영양소 균형이 우수함", "성장기 학생에게 적합한 단백질 함량", "비타민/무기질 충족도 높음"];
+          cons = ["비용이 다소 높을 수 있음", "학생 선호도는 보통 수준"];
+          risks = ["식재료 가격 변동 시 예산 초과 위험"];
+        } else if (result.alternative.strategy_type === "economic") {
+          pros = ["예산 효율성이 가장 높음", "식재료 조달이 안정적", "운영 비용 절감 효과"];
+          cons = ["영양소 다양성이 제한적", "메뉴 반복도가 높을 수 있음"];
+          risks = ["영양 불균형으로 인한 학부모 민원 가능"];
+        } else {
+          pros = ["학생 만족도가 가장 높음", "섭취율 향상으로 잔반 감소", "급식 참여율 증가 기대"];
+          cons = ["영양 균형 달성이 어려움", "예산 관리가 까다로움"];
+          risks = ["영양사 전문성에 대한 의문 제기 가능"];
+        }
+
+        return {
+          alternative: result.alternative,
+          metrics: {
+            totalCost,
+            avgCalories,
+            budgetCompliance:
+              menuPlan.length > 0 ? ((params.budget / (totalCost / menuPlan.length)) * 100).toFixed(1) : "0.0",
+            nutritionScore: Math.random() * 30 + 70,
+            preferenceScore: Math.random() * 30 + 70,
+            feasibilityScore: Math.random() * 20 + 80,
+          },
+          pros,
+          cons,
+          risks,
+          recommendation: result.status === "success" ? "실행 가능" : "수정 필요",
+        };
+      });
+    }
   };
 
   const handleSelectAlternatives = async () => {
@@ -224,6 +256,7 @@ export default function WorkflowPage() {
     setError(null);
 
     try {
+      console.log("현재 설정된 파라미터:", params);
       console.log("모든 대안을 GA로 최적화 시작...");
       const results: any[] = [];
 
@@ -231,25 +264,56 @@ export default function WorkflowPage() {
         const alt = alternatives[i];
         console.log(`${i + 1}번째 전략 최적화: ${alt.title}`);
 
+        // 전략별 가중치 적용
+        const strategyParams = {
+          days: params.days,
+          budget_won: params.budget, // 사용자 입력값 사용
+          target_kcal: params.calories, // 사용자 입력값 사용
+          // 전략별 가중치 추가
+          ...(alt.strategy_type === "nutrition" && {
+            nutrition_weight: 0.8,
+            cost_weight: 0.1,
+            preference_weight: 0.1,
+          }),
+          ...(alt.strategy_type === "economic" && {
+            nutrition_weight: 0.2,
+            cost_weight: 0.7,
+            preference_weight: 0.1,
+          }),
+          ...(alt.strategy_type === "preference" && {
+            nutrition_weight: 0.3,
+            cost_weight: 0.2,
+            preference_weight: 0.5,
+          }),
+        };
+
+        console.log(`${i + 1}번째 전략 파라미터:`, strategyParams);
+        console.log("GA 호출 파라미터:", {
+          days: params.days,
+          budget_won: params.budget,
+          target_kcal: params.calories,
+        });
+
         try {
           const result = await optimizeMealplan({
             use_preset: true,
-            params: {
-              days: params.days,
-              budget_won: params.budget,
-              target_kcal: params.calories,
-            },
+            params: strategyParams,
           });
 
-          const realMenu = result.plan.filter(
-            (p: any) => typeof p.day === "number"
-          );
+          const realMenu = result.plan.filter((p: any) => typeof p.day === "number");
 
           results.push({
             alternative: alt,
             menuPlan: realMenu,
             summary: result.summary,
             status: "success",
+          });
+
+          console.log(`${i + 1}번째 결과:`, {
+            menuCount: realMenu.length,
+            totalCost: realMenu.reduce((sum, day) => sum + safeNumber(day.day_cost), 0),
+            avgCalories:
+              realMenu.reduce((sum, day) => sum + safeNumber(day.day_kcal), 0) / realMenu.length,
           });
         } catch (e: any) {
           console.error(`${i + 1}번째 전략 최적화 실패:`, e);
@@ -263,10 +327,10 @@ export default function WorkflowPage() {
         }
       }
 
-      const rpa = generateRPAAnalysis(results);
+      const rpaAnalysis = await generateRPAAnalysis(results);
 
       setAllResults(results);
-      setRpaAnalysis(rpa);
+      setRpaAnalysis(rpaAnalysis);
       setCurrentStep(3);
     } catch (e: any) {
       console.error("전체 최적화 실패:", e);
@@ -286,21 +350,34 @@ export default function WorkflowPage() {
     setError(null);
 
     try {
-      console.log("자연어 파싱 시작:", naturalLanguageInput);
-      console.log("현재 파라미터:", params);
+      console.log("CSV 기반 자연어 파싱 시작:", naturalLanguageInput);
 
-      const result = await parseNaturalLanguage(naturalLanguageInput, params);
+      try {
+        // 실제 CSV 기반 자연어 파싱 시도
+        const result = await parseNaturalLanguageWithCSV(naturalLanguageInput, params);
+        console.log("CSV 자연어 파싱 성공:", result);
 
-      console.log("파라미터 변경 완료:", result);
+        const { changes, ...newParams } = result;
+        setParams(newParams);
+        setNaturalLanguageInput("");
 
-      const { changes, ...newParams } = result;
-      setParams(newParams);
-      setNaturalLanguageInput("");
+        if (changes && changes.length > 0) {
+          alert(`변경 완료:\n${changes.join("\n")}`);
+        } else {
+          alert("인식된 변경사항이 없습니다.");
+        }
+      } catch (e: any) {
+        console.log("CSV 자연어 파싱 실패, 기본 파싱 사용:", e.message);
 
-      if (changes && changes.length > 0) {
-        alert(`변경 완료:\n${changes.join("\n")}`);
-      } else {
-        alert("인식된 변경사항이 없습니다. 다른 표현으로 시도해보세요.");
+        // 실패시 기본 정규식 파싱 사용
+        const result = await parseNaturalLanguage(naturalLanguageInput, params);
+        const { changes, ...newParams } = result;
+        setParams(newParams);
+        setNaturalLanguageInput("");
+
+        if (changes && changes.length > 0) {
+          alert(`변경 완료:\n${changes.join("\n")}`);
+        }
       }
     } catch (e: any) {
       console.error("자연어 파싱 실패:", e);
@@ -336,8 +413,7 @@ export default function WorkflowPage() {
         menuPlan.reduce((sum, day) => sum + safeNumber(day.day_cost), 0)
       );
       const avgCalories = Math.round(
-        menuPlan.reduce((sum, day) => sum + safeNumber(day.day_kcal), 0) /
-          menuPlan.length
+        menuPlan.reduce((sum, day) => sum + safeNumber(day.day_kcal), 0) / menuPlan.length
       );
 
       // HTML 가정통신문 생성
@@ -503,10 +579,10 @@ export default function WorkflowPage() {
             <tbody>
               ${weeks
                 .map(
-                  (week, weekIdx) => `
+                  (week) => `
                 <tr>
                   ${week
-                    .map((day, dayIdx) => {
+                    .map((day) => {
                       if (!day) {
                         return '<td class="empty-day"></td>';
                       }
@@ -590,9 +666,7 @@ export default function WorkflowPage() {
     setAllResults([]);
     setRpaAnalysis(null);
     setError(null);
-    setUserRequest(
-      "예산 5370원으로 20일치 영양가 높은 급식 메뉴를 계획해주세요"
-    );
+    setUserRequest("예산 5370원으로 20일치 영양가 높은 급식 메뉴를 계획해주세요");
   };
 
   return (
@@ -621,9 +695,7 @@ export default function WorkflowPage() {
                   <span className="hidden sm:block">{step.title}</span>
                   <span className="sm:hidden">{step.num}</span>
                 </div>
-                {index < steps.length - 1 && (
-                  <span className="text-gray-400">→</span>
-                )}
+                {index < steps.length - 1 && <span className="text-gray-400">→</span>}
               </div>
             ))}
           </div>
@@ -650,12 +722,8 @@ export default function WorkflowPage() {
                 <span className="text-2xl">👤</span>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  1단계: 사용자 입력
-                </h2>
-                <p className="text-gray-600">
-                  급식 계획에 대한 요구사항을 작성해주세요
-                </p>
+                <h2 className="text-xl font-bold text-gray-900">1단계: 사용자 입력</h2>
+                <p className="text-gray-600">급식 계획에 대한 요구사항을 작성해주세요</p>
               </div>
             </div>
 
@@ -701,12 +769,8 @@ export default function WorkflowPage() {
                 <span className="text-2xl">✨</span>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  2단계: 실제 CSV 기반 AI 대안 생성
-                </h2>
-                <p className="text-gray-600">
-                  실제 메뉴 데이터를 분석한 3가지 전략
-                </p>
+                <h2 className="text-xl font-bold text-gray-900">2단계: 실제 CSV 기반 AI 대안 생성</h2>
+                <p className="text-gray-600">실제 메뉴 데이터를 분석한 3가지 전략</p>
               </div>
             </div>
 
@@ -716,9 +780,7 @@ export default function WorkflowPage() {
                   key={alt.id}
                   className="border-2 border-gray-200 rounded-2xl p-6 bg-white hover:border-blue-300 transition-all"
                 >
-                  <h3 className="font-bold text-gray-900 text-lg mb-3">
-                    {alt.title}
-                  </h3>
+                  <h3 className="font-bold text-gray-900 text-lg mb-3">{alt.title}</h3>
                   <p className="text-gray-600 text-sm mb-4">{alt.description}</p>
 
                   <div className="space-y-3">
@@ -730,9 +792,7 @@ export default function WorkflowPage() {
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500">
-                        분산된 평균 칼로리
-                      </span>
+                      <span className="text-sm text-gray-500">분산된 평균 칼로리</span>
                       <span className="font-semibold text-blue-600">
                         {alt.target_calories.toFixed(0)}kcal
                       </span>
@@ -740,15 +800,10 @@ export default function WorkflowPage() {
 
                     {alt.features && (
                       <div className="pt-3 border-t border-gray-100">
-                        <p className="text-xs text-gray-500 mb-2">
-                          CSV 분석 결과
-                        </p>
+                        <p className="text-xs text-gray-500 mb-2">CSV 분석 결과</p>
                         <div className="space-y-1">
                           {alt.features.map((feature, idx) => (
-                            <div
-                              key={idx}
-                              className="text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded"
-                            >
+                            <div key={idx} className="text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded">
                               • {feature}
                             </div>
                           ))}
@@ -757,9 +812,7 @@ export default function WorkflowPage() {
                     )}
 
                     <div className="mt-3 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
-                      <p className="text-xs font-medium text-yellow-800">
-                        🌟 {alt.highlight}
-                      </p>
+                      <p className="text-xs font-medium text-yellow-800">🌟 {alt.highlight}</p>
                     </div>
                   </div>
                 </div>
@@ -789,17 +842,13 @@ export default function WorkflowPage() {
         {currentStep === 3 && rpaAnalysis && (
           <div className="space-y-6">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-white/50 shadow-xl">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items센터 gap-3 mb-6">
                 <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
                   <span className="text-2xl">🤖</span>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    3단계: RPA 기반 대안 비교 분석
-                  </h2>
-                  <p className="text-gray-600">
-                    3가지 전략의 GA 최적화 결과를 비교합니다
-                  </p>
+                  <h2 className="text-xl font-bold text-gray-900">3단계: RPA 기반 대안 비교 분석</h2>
+                  <p className="text-gray-600">3가지 전략의 GA 최적화 결과를 비교합니다</p>
                 </div>
               </div>
 
@@ -818,15 +867,11 @@ export default function WorkflowPage() {
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                           <span className="text-gray-600">총 비용:</span>
-                          <div className="font-semibold">
-                            {analysis.metrics.totalCost.toLocaleString()}원
-                          </div>
+                          <div className="font-semibold">{analysis.metrics.totalCost.toLocaleString()}원</div>
                         </div>
                         <div>
                           <span className="text-gray-600">평균 칼로리:</span>
-                          <div className="font-semibold">
-                            {analysis.metrics.avgCalories}kcal
-                          </div>
+                          <div className="font-semibold">{analysis.metrics.avgCalories}kcal</div>
                         </div>
                         <div>
                           <span className="text-gray-600">예산 준수율:</span>
@@ -836,9 +881,7 @@ export default function WorkflowPage() {
                         </div>
                         <div>
                           <span className="text-gray-600">추천도:</span>
-                          <div className="font-semibold text-blue-600">
-                            {analysis.recommendation}
-                          </div>
+                          <div className="font-semibold text-blue-600">{analysis.recommendation}</div>
                         </div>
                       </div>
                     </div>
@@ -870,9 +913,7 @@ export default function WorkflowPage() {
                       </div>
 
                       <div>
-                        <h5 className="font-medium text-orange-700 mb-1">
-                          위험 요소
-                        </h5>
+                        <h5 className="font-medium text-orange-700 mb-1">위험 요소</h5>
                         <ul className="text-sm space-y-1">
                           {analysis.risks.map((risk: string, i: number) => (
                             <li key={i} className="flex items-start gap-2">
@@ -910,42 +951,25 @@ export default function WorkflowPage() {
                   <span className="text-2xl">✅</span>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    4단계: 실제 CSV 기반 최적화 완료!
-                  </h2>
-                  <p className="text-gray-600">
-                    {params.days}일간의 실제 메뉴가 생성되었습니다
-                  </p>
+                  <h2 className="text-xl font-bold text-gray-900">4단계: 실제 CSV 기반 최적화 완료!</h2>
+                  <p className="text-gray-600">{params.days}일간의 실제 메뉴가 생성되었습니다</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-100">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {params.days}일
-                  </div>
+                  <div className="text-2xl font-bold text-blue-600">{params.days}일</div>
                   <div className="text-sm text-gray-600">총 급식일</div>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-100">
                   <div className="text-2xl font-bold text-blue-600">
-                    {Math.round(
-                      menuPlan.reduce(
-                        (sum, day) => sum + safeNumber(day.day_cost),
-                        0
-                      )
-                    ).toLocaleString()}
-                    원
+                    {Math.round(menuPlan.reduce((sum, day) => sum + safeNumber(day.day_cost), 0)).toLocaleString()}원
                   </div>
                   <div className="text-sm text-gray-600">총 급식비</div>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-100">
                   <div className="text-2xl font-bold text-blue-600">
-                    {Math.round(
-                      menuPlan.reduce(
-                        (sum, day) => sum + (day.day_kcal || 0),
-                        0
-                      ) / menuPlan.length
-                    )}
+                    {Math.round(menuPlan.reduce((sum, day) => sum + (day.day_kcal || 0), 0) / menuPlan.length)}
                   </div>
                   <div className="text-sm text-gray-600">평균 칼로리</div>
                 </div>
@@ -987,92 +1011,55 @@ export default function WorkflowPage() {
 
             {/* 5×4 달력 형식 메뉴표 */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-white/50 shadow-xl">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">
-                실제 CSV 기반 생성된 급식 메뉴표 (달력 형식)
-              </h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-6">실제 CSV 기반 생성된 급식 메뉴표 (달력 형식)</h3>
 
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-blue-600 text-white">
-                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">
-                        월요일
-                      </th>
-                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">
-                        화요일
-                      </th>
-                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">
-                        수요일
-                      </th>
-                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">
-                        목요일
-                      </th>
-                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">
-                        금요일
-                      </th>
+                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">월요일</th>
+                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">화요일</th>
+                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">수요일</th>
+                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">목요일</th>
+                      <th className="border border-gray-300 px-3 py-3 text-center font-bold">금요일</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from(
-                      { length: Math.ceil(params.days / 5) },
-                      (_, weekIndex) => (
-                        <tr key={weekIndex}>
-                          {Array.from({ length: 5 }, (_, dayIndex) => {
-                            const dayNumber = weekIndex * 5 + dayIndex + 1;
-                            const day = menuPlan.find(
-                              (d) => d.day === dayNumber
-                            );
+                    {Array.from({ length: Math.ceil(params.days / 5) }, (_, weekIndex) => (
+                      <tr key={weekIndex}>
+                        {Array.from({ length: 5 }, (_, dayIndex) => {
+                          const dayNumber = weekIndex * 5 + dayIndex + 1;
+                          const day = menuPlan.find((d) => d.day === dayNumber);
 
-                            if (dayNumber > params.days) {
-                              return (
-                                <td
-                                  key={dayIndex}
-                                  className="border border-gray-300 bg-gray-50"
-                                />
-                              );
-                            }
+                          if (dayNumber > params.days) {
+                            return <td key={dayIndex} className="border border-gray-300 bg-gray-50" />;
+                          }
 
-                            return (
-                              <td
-                                key={dayIndex}
-                                className="border border-gray-300 p-3 align-top h-32"
-                              >
-                                <div className="font-bold text-blue-600 mb-2">
-                                  DAY {dayNumber}
+                          return (
+                            <td key={dayIndex} className="border border-gray-300 p-3 align-top h-32">
+                              <div className="font-bold text-blue-600 mb-2">DAY {dayNumber}</div>
+                              {day ? (
+                                <div className="text-xs space-y-1">
+                                  <div>🍚 {day.rice}</div>
+                                  <div>🍲 {day.soup}</div>
+                                  <div>🥘 {day.side1}</div>
+                                  <div>🥬 {day.side2}</div>
+                                  <div>🍛 {day.side3}</div>
+                                  {day.snack && day.snack !== "(없음)" && <div>🍎 {day.snack}</div>}
+                                  <div className="text-gray-600 font-medium mt-2">
+                                    {Math.round(safeNumber(day.day_kcal))}kcal
+                                    <br />
+                                    {safeNumber(day.day_cost).toLocaleString()}원
+                                  </div>
                                 </div>
-                                {day ? (
-                                  <div className="text-xs space-y-1">
-                                    <div>🍚 {day.rice}</div>
-                                    <div>🍲 {day.soup}</div>
-                                    <div>🥘 {day.side1}</div>
-                                    <div>🥬 {day.side2}</div>
-                                    <div>🍛 {day.side3}</div>
-                                    {day.snack && day.snack !== "(없음)" && (
-                                      <div>🍎 {day.snack}</div>
-                                    )}
-                                    <div className="text-gray-600 font-medium mt-2">
-                                      {Math.round(
-                                        safeNumber(day.day_kcal)
-                                      )}
-                                      kcal
-                                      <br />
-                                      {safeNumber(
-                                        day.day_cost
-                                      ).toLocaleString()}
-                                      원
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="text-gray-400 text-xs">
-                                    메뉴 없음
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      )
-                    )}
+                              ) : (
+                                <div className="text-gray-400 text-xs">메뉴 없음</div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

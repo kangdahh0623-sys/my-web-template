@@ -1,11 +1,20 @@
 # backend/app/api/analyze.py
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
-import os, shutil, tempfile, uuid, pandas as pd
+import os, shutil, tempfile, uuid, pandas as pd, base64
 from app.core.config import settings
 from app.services.intake_runner_adapter import analyze_pair_with_your_logic, render_vis
 
 router = APIRouter()
+
+def image_to_base64(image_path):
+    try:
+        with open(image_path, "rb") as img_file:
+            encoded = base64.b64encode(img_file.read()).decode('utf-8')
+            return encoded
+    except Exception as e:
+        print(f"Base64 인코딩 오류: {e}")
+        return None
 
 @router.post("/result")
 async def analyze_result(
@@ -39,10 +48,13 @@ async def analyze_result(
             render_vis(b_path, res_b, vis_b_tmp)
             render_vis(a_path, res_a, vis_a_tmp)
 
-            # 4) media/ 로 복사 (고유 파일명으로)
+            # 4) Base64로 이미지 인코딩
+            #vis_before_b64 = image_to_base64(vis_b_tmp)
+            #vis_after_b64 = image_to_base64(vis_a_tmp)
+
             media_dir = os.path.join(settings.MEDIA_DIR, settings.INTAKE_MEDIA_SUBDIR)
             os.makedirs(media_dir, exist_ok=True)
-            uid = uuid.uuid4().hex[:8]
+            uid = uuid.uuid4().hex[:8]  # 이 줄이 필요합니다
             vis_b = os.path.join(media_dir, f"vis_before_{uid}.jpg")
             vis_a = os.path.join(media_dir, f"vis_after_{uid}.jpg")
             shutil.copy2(vis_b_tmp, vis_b)
@@ -65,11 +77,15 @@ async def analyze_result(
                 "after":  rows(after_df),
                 "consumed": rows(consumed_df),
                 "totals": totals,
-                "vis_before": vis_b.replace("\\", "/"),
-                "vis_after":  vis_a.replace("\\", "/"),
+                "vis_before": f"http://localhost:8002/media/intake/vis_before_{uid}.jpg",
+                "vis_after": f"http://localhost:8002/media/intake/vis_after_{uid}.jpg",
             }
             return JSONResponse({"status": "ok", "result": result})
 
     except Exception as e:
         import traceback; print("analyze error\n", traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"analyze failed: {e}")
+
+@router.get("/health")
+async def analyze_health():
+    return {"status": "healthy", "service": "analyze"}

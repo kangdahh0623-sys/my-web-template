@@ -10,6 +10,7 @@ router = APIRouter()
 
 class RPAAnalysisRequest(BaseModel):
     menu_results: List[Dict[str, Any]]
+ 
     
 @router.post("/analyze-results")
 async def analyze_with_csv_rpa(request: RPAAnalysisRequest):

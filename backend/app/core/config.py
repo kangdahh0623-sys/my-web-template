@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Optional, List
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # .../backend (app/core/config.py 기준 두 단계 위)
@@ -42,16 +40,16 @@ class Settings(BaseSettings):
     max_age: int = 86400  # 24시간
 
     # ===== 비전/YOLO 관련 =====
-    yolo_weights: Optional[str] = "models/best.pt"
-    yolo_device: str = "cpu"
-    yolo_imgsz: int = 640
-    yolo_conf: float = 0.5
-    yolo_max_det: int = 20
+    YOLO_WEIGHTS: Optional[str] = "models/best.pt"
+    YOLO_DEVICE: str = "cpu"
+    YOLO_IMGSZ: int = 640
+    YOLO_CONF: float = 0.5
+    YOLO_MAX_DET: int = 20
 
     # 데이터/미디어 경로
-    food_meta_path: Optional[str] = None
-    media_dir: str = "media"
-    intake_media_subdir: str = "intake"
+    FOOD_META_PATH: Optional[str] = None
+    MEDIA_DIR: str = "media"
+    INTAKE_MEDIA_SUBDIR: str = "intake"
 
     # ===== 식단 최적화 프리셋 플래그 =====
     mealplan_use_preset: bool = True
@@ -82,57 +80,6 @@ class Settings(BaseSettings):
         if not q.is_absolute():
             q = (BASE_DIR / q).resolve()
         return str(q)
-
-    # ---------- 파서/밸리데이터 ----------
-    @field_validator("allowed_origins", mode="before")
-    @classmethod
-    def _parse_allowed_origins(cls, v):
-        # .env에서 '["...","..."]' 형태면 JSON으로 파싱, 콤마 구분 문자열도 허용
-        if isinstance(v, list):
-            return v
-        if isinstance(v, str):
-            try:
-                return json.loads(v)
-            except Exception:
-                return [s.strip() for s in v.split(",") if s.strip()]
-        return v
-
-    @field_validator("allowed_methods", "allowed_headers", mode="before")
-    @classmethod
-    def _parse_list_fields(cls, v):
-        if isinstance(v, list):
-            return v
-        if isinstance(v, str):
-            try:
-                return json.loads(v)
-            except Exception:
-                return [s.strip() for s in v.split(",") if s.strip()]
-        return v
-
-    @field_validator("debug", "mealplan_use_preset", "allow_credentials", mode="before")
-    @classmethod
-    def _parse_bool(cls, v):
-        if isinstance(v, bool):
-            return v
-        if isinstance(v, str):
-            return v.strip().lower() in {"1", "true", "yes", "y", "on"}
-        return bool(v)
-
-    @field_validator("yolo_imgsz", "yolo_max_det", "max_age", "request_timeout", "optimization_timeout", "keep_alive_timeout", "workers", "worker_connections", mode="before")
-    @classmethod
-    def _parse_int(cls, v):
-        try:
-            return int(v)
-        except Exception:
-            return v
-
-    @field_validator("yolo_conf", mode="before")
-    @classmethod
-    def _parse_float(cls, v):
-        try:
-            return float(v)
-        except Exception:
-            return v
 
 
 settings = Settings()

@@ -1,7 +1,9 @@
 # backend/app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles  
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 import logging
 import os
 
@@ -27,25 +29,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# media 디렉토리 보장 + 마운트
-media_dir = getattr(settings, 'media_dir', 'media')
-os.makedirs(media_dir, exist_ok=True)
-app.mount("/media", StaticFiles(directory=media_dir), name="media")
+@app.middleware("http")
+async def add_cors_header(request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
+    return response
 
-# API 라우터 등록 - 안전하게 import
-try:
-    from app.api.main import router as main_api_router
-    app.include_router(main_api_router, prefix="/api")
-    logger.info("Main API router 등록 완료")
-except ImportError as e:
-    logger.warning(f"Main API router 로드 실패: {e}")
+from app.api import analyze
+app.include_router(analyze.router, prefix="/api/analyze", tags=["analyze"])
+print("✅ Analyze router 최우선 등록 완료")
 
+@app.get("/test-direct")
+async def test_direct():
+    return {"message": "direct route working"}
+
+@app.get("/api/analyze/health-direct")
+async def analyze_health_direct():
+    return {"status": "healthy", "service": "direct"}
+
+
+# 라우터들 등록 (StaticFiles보다 먼저)
 try:
     from app.api import mealplan
     app.include_router(mealplan.router, prefix="/api/mealplan", tags=["mealplan"])
     logger.info("Mealplan router 등록 완료")
 except ImportError as e:
     logger.warning(f"Mealplan router 로드 실패: {e}")
+
+
 
 try:
     from app.api import admin
@@ -81,7 +93,7 @@ try:
     logger.info("CSV LLM router 등록 완료")
 except ImportError as e:
     logger.warning(f"CSV LLM router 로드 실패: {e}")
-    
+
 # 기본 라우트
 @app.get("/")
 async def root():
@@ -95,6 +107,22 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
+@app.get("/media/{path:path}")
+async def serve_media(path: str):
+    media_dir = getattr(settings, 'media_dir', 'media')
+    file_path = os.path.join(media_dir, path)
+    if os.path.exists(file_path):
+        response = FileResponse(file_path)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
+        return response
+    return {"error": "File not found"}
+
+# media 디렉토리 마운트 (라우터들 이후에)
+#media_dir = getattr(settings, 'media_dir', 'media')
+#os.makedirs(media_dir, exist_ok=True)
+#app.mount("/media", CORSStaticFiles(directory=media_dir), name="media")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
@@ -103,4 +131,3 @@ if __name__ == "__main__":
         port=8000,
         reload=getattr(settings, "DEBUG", False)
     )
-
